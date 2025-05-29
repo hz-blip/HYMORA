@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .navbar {
+      display: flex;
+      align-items: center;
+      background-color: #428bca;
+      padding: 0.5rem 1rem;
+    }
+    /* Logo de l'application */
+    .navbar .logo {
+      width: 190px;    /* ? largeur du logo, augmentez si besoin */
+      height: auto;    /* hauteur conservée en proportion */
+      margin-right: 1rem;
+    }
+    /* Bloc qui pousse les liens à droite */
+    .navbar .nav-links {
+      margin-left: auto;
+      display: flex;
+      gap: 1rem;
+    }
+    .nav-button {
+      background: #0B3067;
+      color: #fff;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      text-decoration: none;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .nav-button:hover {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+  {% if session.get('user') and request.endpoint != 'login' %}
+  <nav class="navbar">
+    <!-- 1) Logo à gauche -->
+    <img src="{{ url_for('static', filename='images/logo.jpeg') }}"
+         alt="Logo de l'application"
+         class="logo">
+    <!-- 2) Liens à droite -->
+    <div class="nav-links">
+      <a href="{{ url_for('patients') }}" class="nav-button">Liste des patients</a>
+      <a href="{{ url_for('logout') }}"   class="nav-button">Se déconnecter</a>
+    </div>
+  </nav>
+  {% endif %}
+
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div style="padding:1rem;">
+          {% for cat, msg in messages %}
+            <div class="alert alert-{{ cat }}">{{ msg }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
