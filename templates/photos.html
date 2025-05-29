@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+
+{% block title %}Photos Patient #{{ patient_id }}{% endblock %}
+
+{% block content %}
+<style>
+  .gallery { display:flex; flex-wrap:wrap; gap:1rem; justify-content:center; padding:1rem; }
+  .gallery img { max-width:200px; border-radius:4px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
+  .photo-count { text-align:center; font-size:1rem; margin-bottom:1rem; }
+  .lightbox { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); display:flex; align-items:center; justify-content:center; flex-direction:column; z-index:10000; }
+  .lightbox img { width:100vw; height:100vh; object-fit:contain; border-radius:4px; }
+  .lightbox .nav, .lightbox .close, .lightbox .counter {
+    position:absolute; color:#fff; font-size:2.5rem; cursor:pointer; user-select:none; padding:0.5rem; z-index:10001;
+  }
+  .lightbox .prev { left:1rem; top:50%; transform:translateY(-50%); }
+  .lightbox .next { right:1rem; top:50%; transform:translateY(-50%); }
+  .lightbox .close { top:1rem; right:1rem; }
+  .lightbox .counter { bottom:1rem; font-size:1.25rem; }
+  .btn-return { display:inline-block; background:#0B3067; color:#fff; padding:0.5rem 1rem; border-radius:4px; text-decoration:none; font-size:0.95rem; margin:1rem auto; }
+  .photos-actions { display:flex; gap:0.5rem; justify-content:center; margin-top:1rem; }
+  .photos-actions button { padding:0.5rem 1rem; font-size:1rem; border:none; border-radius:4px; background:#0B3067; color:#fff; cursor:pointer; transition:none; }
+  .photos-actions button.hidden { display:none; }
+  .photo-item { position:relative; }
+  .photo-item input.sel-photo { position:absolute; top:4px; left:4px; transform:scale(1.5); display:none; z-index:1; }
+</style>
+
+<div>
+  <h2 style="text-align:center; padding:1rem;">Photos du patient #{{ patient_id }}</h2>
+
+  <div class="photos-actions">
+    <button id="btn-select">Sélectionner</button>
+    <button id="btn-select-all" class="hidden">Tout sélectionner</button>
+    <button id="btn-delete" class="hidden" style="background:#C00000;">Supprimer</button>
+    <button id="btn-cancel" class="hidden">Annuler</button>
+  </div>
+
+  <div class="photo-count" id="photo-count">
+    {{ captures|length }} photo(s) pour ce patient
+  </div>
+
+  <div class="gallery" id="gallery">
+    {% for c in captures %}
+      <div class="photo-item">
+        <input type="checkbox" class="sel-photo" data-filename="{{ c.filename }}">
+        <img src="{{ url_for('static', filename='eye_captures/' ~ c.filename) }}"
+             alt="Photo {{ loop.index }}">
+      </div>
+    {% endfor %}
+  </div>
+
+  <div style="text-align:center;">
+    <a href="{{ url_for('patients') }}" class="btn-return">← Retour à la liste</a>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox">
+  <span class="nav prev" id="prev">‹</span>
+  <img id="lightbox-img" src="" alt="">
+  <span class="nav next" id="next">›</span>
+  <span class="close" id="close">✕</span>
+  <div class="counter" id="counter"></div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const gallery    = document.getElementById('gallery');
+  const photoCount = document.getElementById('photo-count');
+  const btnSelect  = document.getElementById('btn-select');
+  const btnAll     = document.getElementById('btn-select-all');
+  const btnDelete  = document.getElementById('btn-delete');
+  const btnCancel  = document.getElementById('btn-cancel');
+  const lightbox   = document.getElementById('lightbox');
+  const lbImg      = document.getElementById('lightbox-img');
+  const counter    = document.getElementById('counter');
+  let current = 0;
+
+  function lists() {
+    return {
+      items: Array.from(gallery.querySelectorAll('.photo-item')),
+      imgs:  Array.from(gallery.querySelectorAll('img')),
+      checks:Array.from(gallery.querySelectorAll('.sel-photo'))
+    };
+  }
+
+  function refreshCount() {
+    photoCount.textContent = `${lists().items.length} photo(s) pour ce patient`;
+  }
+
+  function showBox(i) {
+    const imgs = lists().imgs;
+    current = i;
+    lbImg.src = imgs[current].src;
+    counter.textContent = `${current+1} / ${imgs.length}`;
+    lightbox.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function hideBox() {
+    lightbox.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  function bindGallery() {
+    lists().imgs.forEach((img,i)=> img.onclick = ()=> showBox(i));
+  }
+  bindGallery();
+
+  document.getElementById('prev').onclick = ()=>
+    showBox((current-1+lists().imgs.length)%lists().imgs.length);
+  document.getElementById('next').onclick = ()=>
+    showBox((current+1)%lists().imgs.length);
+  document.getElementById('close').onclick = hideBox;
+  document.addEventListener('keydown', e => {
+    if (lightbox.style.display==='flex') {
+      if (e.key==='ArrowLeft')  document.getElementById('prev').click();
+      if (e.key==='ArrowRight') document.getElementById('next').click();
+      if (e.key==='Escape')     hideBox();
+    }
+  });
+
+  function updateDelete() {
+    btnDelete.classList.toggle('hidden',
+      !lists().checks.some(cb=>cb.checked)
+    );
+  }
+  lists().checks.forEach(cb => cb.onchange = updateDelete);
+
+  btnSelect.onclick = () => {
+    lists().checks.forEach(cb=>cb.style.display='block');
+    btnSelect.classList.add('hidden');
+    btnAll.classList.remove('hidden');
+    btnCancel.classList.remove('hidden');
+    updateDelete();
+  };
+
+  btnAll.onclick = () => {
+    lists().checks.forEach(cb=>cb.checked=true);
+    updateDelete();
+  };
+
+  btnCancel.onclick = () => {
+    lists().checks.forEach(cb=>{
+      cb.checked = false;
+      cb.style.display = 'none';
+    });
+    btnSelect.classList.remove('hidden');
+    btnAll.classList.add('hidden');
+    btnDelete.classList.add('hidden');
+    btnCancel.classList.add('hidden');
+    refreshCount();
+  };
+
+  btnDelete.onclick = async () => {
+    const toDelete = lists().checks
+      .filter(cb=>cb.checked)
+      .map(cb=>cb.dataset.filename);
+    if (!toDelete.length) return;
+
+    const res = await fetch('{{ url_for("delete_photos") }}', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ files: toDelete })
+    });
+    if (!res.ok) {
+      alert('Erreur lors de la suppression');
+      return;
+    }
+    const { removed } = await res.json();
+    removed.forEach(fn=> {
+      const cb = lists().checks
+        .find(c=>c.dataset.filename===fn);
+      if (cb) cb.parentElement.remove();
+    });
+    refreshCount();
+    bindGallery();
+    btnCancel.click();
+  };
+});
+</script>
+{% endblock %}
