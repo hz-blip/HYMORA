@@ -1,0 +1,7 @@
+Flask
+picamera2
+numpy
+adafruit-circuitpython-mlx90640
+matplotlib
+scipy
+RPi.GPIO
