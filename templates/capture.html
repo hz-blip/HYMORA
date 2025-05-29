@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block title %}Capture Patient #{{ patient_id }}{% endblock %}
+
+{% block content %}
+<style>
+  main { max-width:100% !important; margin:0; padding:0; }
+
+  .capture-wrapper {
+    display: flex;
+    width: 100vw;
+    height: calc(100vh - 60px);
+    gap: 1rem;
+  }
+
+  .thermal-col {
+    width: 40%;
+    display: flex;
+    flex-direction: column;
+    background: var(--card-bg);
+    padding: 1rem;
+    border-radius: 8px;
+  }
+  .thermal-col img {
+    flex:1; width:100%; object-fit:cover; border-radius:4px;
+  }
+  .thermal-data {
+    margin-top:0.25rem; font-size:1.25rem; font-weight:bold; color:var(--text);
+  }
+
+  .eye-col {
+    width: 60%;
+    display: flex;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .eye-stream-col {
+    width: 75%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background: var(--card-bg);
+    padding: 1rem;
+    border-radius: 8px;
+  }
+  .stream-video {
+    flex:1; overflow:hidden;
+  }
+  .stream-video img {
+    width:100%; height:100%; object-fit:cover; border-radius:4px;
+  }
+
+  .capture-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  .capture-actions button,
+  .capture-actions a {
+    display: block;
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    color: #fff;
+    background: #0B3067; /* même couleur que bouton connexion */
+    transition: none;
+  }
+  .capture-actions button:hover,
+  .capture-actions a:hover {
+    background: #0B3067;
+  }
+
+  .thumbnail-section {
+    width: 25%;
+    display: flex;
+    flex-direction: column;
+    background: var(--card-bg);
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-y: auto;
+    gap: 0.5rem;
+  }
+  .thumbnail-section img {
+    width:100%; border-radius:4px;
+  }
+</style>
+
+<div class="capture-wrapper">
+  <!-- Flux thermique -->
+  <div class="thermal-col">
+    <img id="thermalImg" src="{{ url_for('thermal_feed', patient_id=patient_id) }}" alt="Flux Thermique">
+    <div class="thermal-data" id="thermalData">Chargement des valeurs…</div>
+  </div>
+
+  <!-- Flux Pi + actions + miniatures -->
+  <div class="eye-col">
+    <div class="eye-stream-col">
+      <div class="stream-video">
+        <img id="piImg" src="{{ url_for('pi_feed', patient_id=patient_id) }}" alt="Flux Œil">
+      </div>
+      <div class="capture-actions">
+        <button id="btn-capture">Capturer</button>
+        <a href="{{ url_for('photos', patient_id=patient_id) }}">Voir les photos</a>
+        <a href="{{ url_for('patients') }}">Revenir à la liste</a>
+      </div>
+    </div>
+    <div class="thumbnail-section" id="thumbs">
+      {% for c in captures %}
+        <img src="{{ url_for('static', filename='eye_captures/' ~ c.filename) }}"
+             alt="Capture {{ loop.index }}">
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<script>
+  // Mise à jour des données thermiques
+  setInterval(async () => {
+    let res = await fetch('{{ url_for("thermal_data", patient_id=patient_id) }}');
+    if (!res.ok) return;
+    let d = await res.json();
+    document.getElementById('thermalData').textContent =
+      `Min: ${d.min.toFixed(1)}°C   Max: ${d.max.toFixed(1)}°C   Moy: ${d.mean.toFixed(1)}°C`;
+  }, 1000);
+
+  // Fonction de capture œil
+  document.getElementById('btn-capture').onclick = async () => {
+    try {
+      let res = await fetch('{{ url_for("capture_eye", patient_id=patient_id) }}');
+      if (!res.ok) throw new Error('Échec de la capture');
+      let filename = await res.text();
+      // Insère l'image en haut de la liste
+      let img = document.createElement('img');
+      img.src = `/static/eye_captures/${filename}`;
+      img.alt = 'Nouvelle capture';
+      const cont = document.getElementById('thumbs');
+      cont.prepend(img);
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+</script>
+{% endblock %}
