@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Ajouter un patient{% endblock %}
+
+{% block content %}
+<div style="padding:1rem; max-width:480px; margin:0 auto;">
+  <h2>Ajouter un patient</h2>
+  <form action="{{ url_for('new_patient') }}" method="post" style="display:flex; flex-direction:column; gap:1rem;">
+    <label>
+      Prénom
+      <input type="text" name="prenom" required
+             style="width:100%;padding:0.5rem;border:1px solid #ccc;border-radius:4px;">
+    </label>
+    <label>
+      Nom
+      <input type="text" name="nom" required
+             style="width:100%;padding:0.5rem;border:1px solid #ccc;border-radius:4px;">
+    </label>
+    <label>
+      Date de naissance
+      <input type="date" name="dob" required
+             style="width:100%;padding:0.5rem;border:1px solid #ccc;border-radius:4px;">
+    </label>
+    <label>
+      CIN
+      <input type="text" name="cin" required
+             style="width:100%;padding:0.5rem;border:1px solid #ccc;border-radius:4px;">
+    </label>
+    <label>
+      Date de consultation
+      <input type="date" name="date_consult" required
+             style="width:100%;padding:0.5rem;border:1px solid #ccc;border-radius:4px;">
+    </label>
+    <button type="submit"
+            style="width:100%;padding:0.75rem;background:#0B3067;color:#fff;border:none;border-radius:6px;cursor:pointer;">
+      Ajouter un patient
+    </button>
+  </form>
+</div>
+{% endblock %}
