@@ -1,0 +1,100 @@
+/* Palette médicale */
+:root {
+  --primary:   #3a8edb;  /* bleu apaisant */
+  --secondary: #2e7d32;  /* vert santé */
+  --accent:    #81c784;  /* vert clair */
+  --bg:        #f4faff;  /* bleu très clair */
+  --card-bg:   #ffffff;  /* blanc pur */
+  --text:      #2e3a47;  /* gris anthracite */
+}
+
+/* Reset et typographie */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+/* Animation d'entrée de page */
+.container {
+  width: 90%;
+  max-width: 500px;
+  margin: 3rem auto;
+  opacity: 0;
+  animation: pageFadeIn 0.6s ease-out forwards;
+}
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+/* Styles du formulaire */
+form {
+  background: var(--card-bg);
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  animation: cardPop 0.8s ease-out forwards;
+}
+@keyframes cardPop {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1);     }
+}
+
+label {
+  display: block;
+  margin-top: 1rem;
+  font-weight: 600;
+}
+input, button {
+  width: 100%;
+  padding: 0.8rem;
+  margin-top: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+button {
+  background: var(--secondary);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  transition: background 0.3s, transform 0.2s;
+}
+button:hover {
+  background: var(--accent);
+  transform: translateY(-2px) scale(1.02);
+}
+
+/* Messages d’alerte */
+.alert {
+  padding: 0.8rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+.alert-danger {
+  background-color: #fdecea;
+  color: #b71c1c;
+}
+
+/* Responsive pour formulaire centré */
+@media (min-width: 600px) {
+  .container {
+    max-width: 400px;
+  }
+}
